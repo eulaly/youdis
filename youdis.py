@@ -14,8 +14,10 @@ import json
 import asyncio
 import threading
 
+user_file = '/config/users.json'
+
 bot = interactions.Client(intents=interactions.Intents.DEFAULT,default_scope=2147491904)
-with open('./data.json', 'r') as f:
+with open(user_file, 'r') as f:
     authorized_users = json.load(f).get('authorized_users')
 print(f'authorized_users:{authorized_users}')
 title = ''
@@ -61,12 +63,12 @@ async def youtube(ctx: interactions.SlashContext, url:str):
         'format':'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'fragment_tries': 10,
         'restrictfilenames':True,
-        'paths': {'home':'/unraid'},
+        'paths': {'home':'/downloads'},
         'retries':10,
         'writeinfojson':False,
         'allow_playlist_files':True,
         'noplaylist':True,
-        'download_archive':'/unraid/archive.txt',
+        'download_archive':'/config/archive.txt',
         'progress_hooks':[hook],
         'outtmpl': '%(uploader)s/%(playlist_title)s/%(playlist_index)s%(playlist_index& - )s%(title)s.%(ext)s',
         'outtmpl_na_placeholder':'',
@@ -75,7 +77,7 @@ async def youtube(ctx: interactions.SlashContext, url:str):
     if ctx.author.id not in authorized_users:
         if ctx.author.id == 127831327012683776:
             await ctx.author.send('potato stop')
-        await ctx.author.send('you are not authorized to use this command. message Ben to be added.')
+        await ctx.author.send('you are not authorized to use this command. message my owner to be added.')
         return
     else:
         await ctx.channel.send(f'Downloading from <{url}>. Status updates via DM.')
@@ -112,7 +114,7 @@ async def _interrupt(ctx):
 async def _adduser(ctx: interactions.SlashContext, user:interactions.OptionType.USER):
     if str(user.id) not in authorized_users:
         authorized_users.append(str(user.id))
-        with open('./data.json','w') as f:  #overwrite file - fix later if other params come up
+        with open(user_file,'w') as f:  #overwrite file - fix later if other params come up
             json.dump({'authorized_users':authorized_users})
         print('react:checkmark')
         await ctx.message.add_reaction('✅')

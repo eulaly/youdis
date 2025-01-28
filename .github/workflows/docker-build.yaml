@@ -1,0 +1,38 @@
+name: Check yt-dlp and rebuild if new
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current version
+        id: current
+        run: |
+          CURRENT=$(cat version.txt || echo "none")
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
+
+      - name: Check latest version
+        id: latest
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name || echo "error")
+          if [ "$LATEST" == "error" ]; then
+            echo "failed to fetch latest version" >&2
+            exit 1
+          fi
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+
+      - name: Update version file if changed
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        run: echo ${{ steps.latest.outputs.version }} > version.txt
+
+      - name: Build and push docker image
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: eulaly/youdis:latest,eulaly/youdis:${{ steps.latest.outputs.version }}

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>youdis</Name>
+  <Repository>spoonvacuum/youdis</Repository>
+  <Registry>https://hub.docker.com/r/spoonvacuum/youdis/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/eulaly/youdis</Support>
+  <Project>https://github.com/eulaly/youdis</Project>
+  <Overview>Discord bot-based wrapper for yt-dlp. Supports playlists. Requires a configured Discord bot.</Overview>
+  <Category>Downloaders: Tools:</Category>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/.github/banner.svg</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1737955166</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="api_token" Target="api_token" Default="" Mode="" Description="Discord bot token" Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="Downloads" Target="/downloads" Default="/mnt/user/downloads/youtube" Mode="rw" Description="Video download location" Type="Path" Display="always" Required="true"/>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/youdis/config" Mode="rw" Description="Config location (archive.txt, users.json)" Type="Path" Display="always" Required="true"/>
+</Container>
