@@ -10,7 +10,7 @@
   <Project>https://github.com/eulaly/youdis</Project>
   <Overview>Discord bot-based wrapper for yt-dlp. Let your friends download videos to your server! Supports playlists, requires a configured Discord bot.</Overview>
   <Category>Downloaders: Tools:</Category>
-  <TemplateURL>https://raw.githubusercontent.com/eulaly/youdis/refs/heads/master/unraid-ca-template.xml</TemplateURL>
+  <TemplateURL>https://raw.githubusercontent.com/eulaly/unraid-templates/refs/heads/master/unraid-ca-template.xml</TemplateURL>
   <Icon>https://github.com/eulaly/youdis/blob/c978a2326984efa9670678687ed1a1473478d753/yt_dlp.png</Icon>
   <Config Name="api_token" Target="api_token" Default="" Mode="" Description="Discord bot token" Type="Variable" Display="always" Required="true" Mask="true"/>
   <Config Name="Downloads" Target="/downloads" Default="" Mode="rw" Description="Video download location" Type="Path" Display="always" Required="false"/>
