@@ -40,5 +40,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ben/youdis:latest,ben/youdis:${{ steps.latest.outputs.version }}
+          tags: eulaly/youdis:latest,eulaly/youdis:${{ steps.latest.outputs.version }}
         if: ${{ steps.current.outputs.version != steps.latest.outputs.version }}
