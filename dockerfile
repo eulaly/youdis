@@ -8,6 +8,6 @@ COPY requirements.txt requirements.txt
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 COPY youdis.py youdis.py
 COPY default-yt-dlp.conf /app/default-yt-dlp.conf
-COPY create-ytdlp-conf.sh /app/create-ytdlp-conf.sh
-ENTRYPOINT ["/app/create-ytdlp-conf.sh"]
+COPY create-ytdlp-config.sh /app/create-ytdlp-config.sh
+ENTRYPOINT ["/app/create-ytdlp-config.sh"]
 CMD ["python3", "youdis.py"]
