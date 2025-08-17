@@ -9,17 +9,24 @@ discord-py-interactions 5.11.0 has new option
 
 import interactions
 from os import getenv
+from pathlib import Path
 import yt_dlp
 import json
 import asyncio
 import threading
 
-user_file = '/config/users.json'
+userFile = Path('/config/users.json')
 
 bot = interactions.Client(intents=interactions.Intents.DEFAULT,default_scope=2147491904)
-with open(user_file, 'r') as f:
+
+userFile.parent.mkdir(exist_ok=True, parents=True)
+try:
+    with open(userFile, 'x') as f:
+        print(f'users.json not found; saving to {userFile}')    
+except FileExistsError:
     authorized_users = json.load(f).get('authorized_users')
-print(f'authorized_users:{authorized_users}')
+    print(f'authorized_users:{authorized_users}')
+    
 title = ''
 
 async def send_message(ctx, message):
@@ -68,7 +75,7 @@ async def youtube(ctx: interactions.SlashContext, url:str):
         'writeinfojson':False,
         'allow_playlist_files':True,
         'noplaylist':True,
-        'download_archive':'/config/archive.txt',
+        'download_archive':'./config/archive.txt',
         'progress_hooks':[hook],
         'outtmpl': '%(uploader)s/%(playlist_title)s/%(playlist_index)s%(playlist_index& - )s%(title)s.%(ext)s',
         'outtmpl_na_placeholder':'',
@@ -114,7 +121,7 @@ async def _interrupt(ctx):
 async def _adduser(ctx: interactions.SlashContext, user:interactions.OptionType.USER):
     if str(user.id) not in authorized_users:
         authorized_users.append(str(user.id))
-        with open(user_file,'w') as f:  #overwrite file - fix later if other params come up
+        with open(userFile,'w') as f:  #overwrite file - fix later if other params come up
             json.dump({'authorized_users':authorized_users})
         print('react:checkmark')
         await ctx.message.add_reaction('✅')
