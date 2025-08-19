@@ -43,7 +43,7 @@ def create_hook(ctx,loop):
         global title
         status = d.get('status')
         if status == 'error':
-            msg = f'error; video probably already exists'
+            msg = f'error; video probably already exists, have you checked archive.txt'
             asyncio.run_coroutine_threadsafe(send_message(ctx,msg),loop)
         elif d.get('info_dict').get('title') != title:
             title = d.get('info_dict').get('title')
