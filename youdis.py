@@ -16,6 +16,7 @@ import asyncio
 import threading
 
 userFile = Path('/config/users.json')
+userFile.touch(exist_ok=True)
 
 bot = interactions.Client(intents=interactions.Intents.DEFAULT,default_scope=2147491904)
 
@@ -24,7 +25,8 @@ try:
     with open(userFile, 'x') as f:
         print(f'users.json not found; saving to {userFile}')    
 except FileExistsError:
-    authorized_users = json.load(f).get('authorized_users')
+    with open(userFile, 'r') as f:
+        authorized_users = json.load(f).get('authorized_users')
     print(f'authorized_users:{authorized_users}')
     
 title = ''
