@@ -77,7 +77,7 @@ async def youtube(ctx: interactions.SlashContext, url:str):
         'writeinfojson':False,
         'allow_playlist_files':True,
         'noplaylist':True,
-        'download_archive':'./config/archive.txt',
+        'download_archive':'/config/archive.txt',
         'progress_hooks':[hook],
         'outtmpl': '%(uploader)s/%(playlist_title)s/%(playlist_index)s%(playlist_index& - )s%(title)s.%(ext)s',
         'outtmpl_na_placeholder':'',
