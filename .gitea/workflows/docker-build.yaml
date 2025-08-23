@@ -1,11 +1,14 @@
-name: Check yt-dlp weekly and rebuild if new
+name: build + push containers to gitea (every) and docker (daily)
+
 on:
+  push:
+    branches: [ "master" ]
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * 0'   # weekly check
   workflow_dispatch:
 
 jobs:
-  build:
+  dockerhub:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +19,7 @@ jobs:
           CURRENT=$(cat version.txt || echo "none")
           echo "version=$CURRENT" >> $GITHUB_OUTPUT
 
-      - name: Check latest version
+      - name: check latest yt-dlp release
         id: latest
         run: |
           LATEST=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name || echo "error")
@@ -24,21 +27,43 @@ jobs:
             echo "failed to fetch latest version" >&2
             exit 1
           fi
-          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "yt-dlp version=$LATEST" >> $GITHUB_OUTPUT
 
       - name: Update version file if changed
         run: echo ${{ steps.latest.outputs.version }} > version.txt
         if: ${{ steps.current.outputs.version != steps.latest.outputs.version }}
 
       - name: Login to Dockerhub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push docker image
+      - name: Build and push to Dockerhub
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: eulaly/youdis:latest,eulaly/youdis:${{ steps.latest.outputs.version }}
+          tags: |
+            eulaly/youdis:latest
+            eulaly/youdis:${{ steps.latest.outputs.version }}
         if: ${{ steps.current.outputs.version != steps.latest.outputs.version }}
+
+  gitea:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Gitea (local)
+        uses: docker/login-action@v3
+        with:
+          registry: git.hgsky.me
+          username: ${{ secrets.GITEA_USERNAME }}
+          password: ${{ secrets.GITEA_TOKEN }}
+
+      - name: Build and push to Gitea (all pushes)
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            git.hgsky.me/eulaly/youdis:latest
+            git.hgsky.me/eulaly/youdis:dev-${{ github.sha }}
