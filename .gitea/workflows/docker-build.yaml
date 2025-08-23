@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  docker:
+  versioning:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +55,11 @@ jobs:
           fi
           echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
 
+  dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+      -uses: actions/checkout@v4
+        
       - name: Login to Dockerhub
         uses: docker/login-action@v3
         with:
@@ -73,6 +78,11 @@ jobs:
           labels: |
             YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
             YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
+
+  gitea:
+    runs-on: ubuntu-latest
+    steps:
+      -uses: actions/checkout@v4
 
       - name: Login to Gitea
         uses: docker/login-action@v3
