@@ -77,18 +77,25 @@ jobs:
       - name: Login to Gitea
         uses: docker/login-action@v3
         with:
-          registry: git.hgsky.me/youdis
-          username: ${{ secrets.USERNAME }}
+          registry: git.hgsky.me
+          #username: ${{ secrets.USERNAME }}
+          username: ${{ vars.CI_ACTOR }}
           password: ${{ secrets.YOUDIS_PASSWORD }}
 
+      - name: Debug Gitea Vars
+        run: |
+          echo "Gitea Registry: ${{ vars.CI_REGISTRY }}"
+          echo "Repo Owner: ${{ vars.CI_REPO_OWNER }}"
+          echo "Repo Name: ${{ vars.CI_REPO_NAME }}"
+          echo "Actor (user): ${{ vars.CI_ACTOR }}"
+          
       - name: Build and push to Gitea
         if: ${{ steps.check_build.outputs.should_build == 'true' }}
         uses: docker/build-push-action@v5
         with:
           push: true
           tags: |
-            ben/youdis:latest
-            ben/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}
+            ${{ vars.CI_REGISTRY }}/${{ vars.CI_REPO_OWNER }}/${{ vars.CI_REPO_NAME }}:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}            
           labels: |
             YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
             YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
