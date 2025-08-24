@@ -97,9 +97,9 @@ jobs:
         with:
           push: true
           tags: |
-            git.hgsky.me/eulaly/youdis:latest
-            git.hgsky.me/eulaly/youdis:dev-${{ github.sha }}
-            git.hgsky.me/eulaly/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}
+            git.hgsky.me/ben/youdis:latest
+            git.hgsky.me/ben/youdis:dev-${{ github.sha }}
+            git.hgsky.me/ben/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}
           labels: |
             YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
             YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
