@@ -84,10 +84,10 @@ jobs:
 
       - name: Debug Gitea Vars
         run: |
-          echo "Gitea Registry: ${{ vars.CI_REGISTRY }}"
-          echo "Repo Owner: ${{ vars.CI_REPO_OWNER }}"
-          echo "Repo Name: ${{ vars.CI_REPO_NAME }}"
-          echo "Actor (user): ${{ vars.CI_ACTOR }}"
+          echo "Gitea Registry: ${{ env.CI_REGISTRY }}"
+          echo "Repo Owner: ${{ env.CI_REPO_OWNER }}"
+          echo "Repo Name: ${{ env.CI_REPO_NAME }}"
+          echo "Actor (user): ${{ env.CI_ACTOR }}"
           
       - name: Build and push to Gitea
         if: ${{ steps.check_build.outputs.should_build == 'true' }}
