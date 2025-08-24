@@ -1,7 +1,11 @@
-name: Check yt-dlp and rebuild if new
+# github disables scheduled workflows if repo is stagnant 60d
+name: weekly, if new yt-dlp version, build + push containers to docker
+
 on:
+  push:
+    branches: ["master"]
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * 0'   # weekly
   workflow_dispatch:
 
 jobs:
@@ -10,35 +14,62 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get current version
-        id: current
+      - name: Get youdis version
+        id: youdis
         run: |
-          CURRENT=$(cat version.txt || echo "none")
-          echo "version=$CURRENT" >> $GITHUB_OUTPUT
-
-      - name: Check latest version
-        id: latest
-        run: |
-          LATEST=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name || echo "error")
-          if [ "$LATEST" == "error" ]; then
-            echo "failed to fetch latest version" >&2
+          YOUDIS_VER=$(cat youdis-version.txt)
+          if [ -z "$YOUDIS_VER" ]; then
+            echo "youdis version empty" >&2
             exit 1
           fi
-          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "youdis-version=$YOUDIS_VER" >> $GITHUB_OUTPUT
 
-      - name: Update version file if changed
-        run: echo ${{ steps.latest.outputs.version }} > version.txt
-        if: ${{ steps.current.outputs.version != steps.latest.outputs.version }}
+      - name: Get latest yt-dlp version
+        id: ytdlp
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name)
+          if [ -z "$LATEST" ]; then
+            echo "failed to fetch yt-dlp release" >&2
+            exit 1
+          fi
+          echo "ytdlp-version=$LATEST" >> $GITHUB_OUTPUT
+
+      - name: Get current yt-dlp version from latest container
+        id: current_ytdlp
+        run: |
+          docker pull eulaly/youdis:latest || true
+          if docker image inspect eulaly/youdis:latest >/dev/null 2>&1; then
+            CURR=$(docker inspect --format='{{ index .Config.Labels "YTDLP_VERSION" }}' eulaly/youdis:latest)
+          else
+            CURR="none"
+          fi
+          echo "current-ytdlp=$CURR" >> $GITHUB_OUTPUT
+
+      - name: Decide if build needed
+        id: check_build
+        run: |
+          SHOULD_BUILD=false
+          if [ "${{ steps.youdis.outputs.youdis-version }}" != "$(docker inspect --format='{{ index .Config.Labels "YOUDIS_VERSION" }}' eulaly/youdis:latest || echo none)" ]; then
+            SHOULD_BUILD=true
+          elif [ "${{ steps.ytdlp.outputs.ytdlp-version }}" != "${{ steps.current_ytdlp.outputs.current-ytdlp }}" ]; then
+            SHOULD_BUILD=true
+          fi
+          echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
 
       - name: Login to Dockerhub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push docker image
+      - name: Build and push to Dockerhub
+        if: ${{ steps.check_build.outputs.should_build == 'true' }}
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: eulaly/youdis:latest,eulaly/youdis:${{ steps.latest.outputs.version }}
-        if: ${{ steps.current.outputs.version != steps.latest.outputs.version }}
+          tags: |
+            eulaly/youdis:latest
+            eulaly/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ github.sha::7 }}
+          labels: |
+            YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
+            YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}        
