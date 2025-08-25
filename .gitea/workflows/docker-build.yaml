@@ -96,5 +96,5 @@ jobs:
 
       - name: link container in gitea
         run: |
-          curl -X POST -H "Authorization: token ${{ secrets.SUPER }}" https://git.hgsky.me/api/v1/repos/ben/youdis/packages/container/youdis/link/youdis"
+          curl -X POST -H "Authorization: token ${{ secrets.SUPER }}" https://git.hgsky.me/api/v1/packages/ben/container/youdis/-/link/youdis"
             
