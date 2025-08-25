@@ -1,0 +1,100 @@
+name: weekly, if new yt-dlp, build + push container to docker/gitea
+
+on:
+  push:
+    branches: ["master"]
+  schedule:
+    - cron: '0 0 * * 0'   # weekly
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get youdis version
+        id: youdis
+        run: |
+          YOUDIS_VER=$(cat youdis-version.txt)
+          if [ -z "$YOUDIS_VER" ]; then
+            echo "youdis version empty" >&2
+            exit 1
+          fi
+          echo "youdis-version=$YOUDIS_VER" >> $GITHUB_OUTPUT
+          echo "shortsha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Get latest yt-dlp version
+        id: ytdlp
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name)
+          if [ -z "$LATEST" ]; then
+            echo "failed to fetch yt-dlp release" >&2
+            exit 1
+          fi
+          echo "ytdlp-version=$LATEST" >> $GITHUB_OUTPUT
+
+      - name: Get current yt-dlp version from latest container
+        id: current_ytdlp
+        run: |
+          docker pull eulaly/youdis:latest || true
+          if docker image inspect eulaly/youdis:latest >/dev/null 2>&1; then
+            CURR=$(docker inspect --format='{{ index .Config.Labels "YTDLP_VERSION" }}' eulaly/youdis:latest)
+          else
+            CURR="none"
+          fi
+          echo "current-ytdlp=$CURR" >> $GITHUB_OUTPUT
+
+      - name: Decide if build needed
+        id: check_build
+        run: |
+          SHOULD_BUILD=false
+          if [ "${{ steps.youdis.outputs.youdis-version }}" != "$(docker inspect --format='{{ index .Config.Labels "YOUDIS_VERSION" }}' eulaly/youdis:latest || echo none)" ]; then
+            SHOULD_BUILD=true
+          elif [ "${{ steps.ytdlp.outputs.ytdlp-version }}" != "${{ steps.current_ytdlp.outputs.current-ytdlp }}" ]; then
+            SHOULD_BUILD=true
+          fi
+          echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+
+      - name: Login to Dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push to Dockerhub
+        if: ${{ steps.check_build.outputs.should_build == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            eulaly/youdis:latest
+            eulaly/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}
+          labels: |
+            YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
+            YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
+
+      - name: Login to Gitea
+        uses: docker/login-action@v3
+        with:
+          registry: git.hgsky.me
+          username: ${{ secrets.USERNAME }}
+          #username: ${{ vars.CI_ACTOR }}
+          password: ${{ secrets.YOUDIS_PASSWORD }}
+
+      - name: Build and push to Gitea
+        if: ${{ steps.check_build.outputs.should_build == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            git.hgsky.me/ben/youdis:latest
+            git.hgsky.me/ben/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}            
+          labels: |
+            YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
+            YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
+
+      - name: link container in gitea
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.SUPER }}" https://git.hgsky.me/api/v1/packages/ben/container/youdis/-/link/youdis"
+            
