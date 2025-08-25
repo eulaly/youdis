@@ -82,20 +82,19 @@ jobs:
           #username: ${{ vars.CI_ACTOR }}
           password: ${{ secrets.YOUDIS_PASSWORD }}
 
-      - name: Debug Gitea Vars
-        run: |
-          echo "Gitea Registry: ${{ env.CI_REGISTRY }}"
-          echo "Repo Owner: ${{ env.CI_REPO_OWNER }}"
-          echo "Repo Name: ${{ env.CI_REPO_NAME }}"
-          echo "Actor (user): ${{ env.CI_ACTOR }}"
-          
       - name: Build and push to Gitea
         if: ${{ steps.check_build.outputs.should_build == 'true' }}
         uses: docker/build-push-action@v5
         with:
           push: true
           tags: |
-            ${{ vars.CI_REGISTRY }}/${{ vars.CI_REPO_OWNER }}/${{ vars.CI_REPO_NAME }}:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}            
+            git.hgsky.me/ben/youdis:latest
+            git.hgsky.me/ben/youdis:ytldlp-${{ steps.ytdlp.outputs.ytdlp-version }}.youdis-${{ steps.youdis.outputs.shortsha }}            
           labels: |
             YOUDIS_VERSION=${{ steps.youdis.outputs.youdis-version }}
             YTDLP_VERSION=${{ steps.ytdlp.outputs.ytdlp-version }}
+
+      - name: link container in gitea
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.SUPER }}" https://git.hgsky.me/api/v1/repos/ben/youdis/packages/container/youdis/link/youdis"
+            
